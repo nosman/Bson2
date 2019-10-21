@@ -1,0 +1,9 @@
+(executable
+  (name bson_test)
+  (libraries ounit bson)
+)
+
+(alias
+  (name    runtest)
+  (package bson)
+  (action  (run ./bson_test.exe)))
