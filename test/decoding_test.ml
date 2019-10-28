@@ -1,11 +1,12 @@
 open OUnit
 open Core
 open Validators
+open Bson2
 
 let name = "Test bson decoder"
 
 let validators =
-    let open Bson.Reader in
+    let open Binary.Reader in
     [ Field("foo", Int32(5l))
     ; Field("field1", Int64(123456L))
     ; Field("biggerfield", Boolean(true))
@@ -13,7 +14,7 @@ let validators =
     |> List.map ~f:validate_read_result
 
 let nested_doc_validators =
-    let open Bson.Reader in
+    let open Binary.Reader in
     [ Field("nested_doc", Document_start)
     ; Field("foo", Int32(5l))
     ; Field("field1", Int64(123456L))
@@ -23,7 +24,7 @@ let nested_doc_validators =
     |> List.map ~f:validate_read_result
 
 let nested_doc'_validators =
-    let open Bson.Reader in
+    let open Binary.Reader in
     [ Field("foo", Int32(5l))
     ; Field("field1", Int64(123456L))
     ; Field("biggerfield", Boolean(true))
@@ -36,7 +37,7 @@ let nested_doc'_validators =
     |> List.map ~f:validate_read_result
 
 let binary_doc_validators =
-    let open Bson in
+    let open Binary in
     let open Reader in
     [ Field("generic_field", Binary(Generic, Bytes.of_string "generic_value"))
     ; Field("function_field", Binary(Function, Bytes.of_string "function_value"))
@@ -50,7 +51,7 @@ let binary_doc_validators =
     |> List.map ~f:validate_read_result 
 
 let doc_with_all_fields_validators =
-    let open Bson in
+    let open Binary in
     let open Reader in
     [ Field("name_float", Double(123.456))
     ; Field("name_string", String("value_string"))

@@ -1,12 +1,14 @@
 open Core
+open Bson2
+
 
 let write_flat_doc doc =
-    Bson.Writer.(write_int32 doc "foo" 5l;
+    Binary.Writer.(write_int32 doc "foo" 5l;
           write_int64 doc "field1" 123456L;
           write_bool doc "biggerfield" true)
 
 let flat_doc =
-    Bson.Writer.(
+    Binary.Writer.(
         let doc = create 64 in
         write_flat_doc doc;
         write_document_close doc;
@@ -28,7 +30,7 @@ let size_of_flat_doc =
     44
 
 let nested_doc' =
-    let open Bson.Writer in    
+    let open Binary.Writer in    
     let doc = create 64 in
     write_flat_doc doc;
     write_document_start doc "inner_doc";
@@ -43,7 +45,7 @@ let size_of_nested_doc' =
     99
 
 let nested_doc =
-    let open Bson.Writer in
+    let open Binary.Writer in
     let doc = create 64 in
     write_document_start doc "nested_doc";
     write_flat_doc doc;
@@ -74,12 +76,12 @@ let write_string_array doc num_fields =
     else
         let key = Int.to_string i in
         let value = sprintf "field_%s" key in
-        Bson.Writer.write_string doc key value;
+        Binary.Writer.write_string doc key value;
         helper (i + 1) in
     helper 0
 
 let doc_with_all_fields =
-    let open Bson.Writer in
+    let open Binary.Writer in
     let doc = create 64 in
     write_float doc "name_float" 123.456;
     write_string doc "name_string" "value_string";
@@ -111,7 +113,7 @@ let doc_with_all_fields =
         failwith "Error creating document with all fields"
 
 let binary_fields_doc =
-    let open Bson in
+    let open Binary in
     let open Writer in
     let doc = create 64 in
     write_binary doc "generic_field" Generic (Bytes.of_string "generic_value");

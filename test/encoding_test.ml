@@ -1,6 +1,7 @@
 open OUnit
 (*open Core *)
 open Validators
+open Bson2
 
 let name = "Test bson encoder"
 
@@ -22,7 +23,7 @@ let tests =
             validate_expected_contents Fixture.binary_fields_doc_bytes Fixture.binary_fields_doc)
     ; "Test closing document or array in invalid state throws exception." >::
         (fun _ ->
-            let open Bson.Writer in
+            let open Binary.Writer in
             let doc =
                 create 64 in
             write_string doc "foo" "bar";
@@ -34,7 +35,7 @@ let tests =
                 ())
     ; "Test cannot close a document while an array or js code scope is open" >::
         (fun _ ->
-            let open Bson.Writer in
+            let open Binary.Writer in
             let doc =
                 create 64 in
             write_array_start doc "array_field";
