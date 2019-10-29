@@ -15,5 +15,5 @@ depends: [
   "ocaml" {>= "4.04"}
   "ounit" {with-test}
   "dune" {build}
-  "core"
+  "core" {>= 0.12.0}
 ]
