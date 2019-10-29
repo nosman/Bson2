@@ -12,7 +12,7 @@ let flat_doc =
         let doc = create 64 in
         write_flat_doc doc;
         write_document_close doc;
-        match finalize doc with
+        match to_bytes doc with
         | Ok bytes -> bytes
         | Error _ -> failwith "Error creating test document")
 
@@ -37,7 +37,7 @@ let nested_doc' =
     write_flat_doc doc;
     write_document_close doc;
     write_document_close doc;
-    match finalize doc with
+    match to_bytes doc with
     | Ok bytes -> bytes
     | Error _ -> failwith "Error creating test document"
 
@@ -51,7 +51,7 @@ let nested_doc =
     write_flat_doc doc;
     write_document_close doc;
     write_document_close doc;
-    match finalize doc with
+    match to_bytes doc with
     | Ok bytes -> bytes
     | Error _ -> failwith "Error creating nested document"
 
@@ -107,7 +107,7 @@ let doc_with_all_fields =
     write_minkey doc "name_minkey";
     write_maxkey doc "name_maxkey";
     write_document_close doc;
-    match finalize doc with
+    match to_bytes doc with
     | Ok bytes -> bytes
     | Error _ ->
         failwith "Error creating document with all fields"
@@ -125,7 +125,7 @@ let binary_fields_doc =
     write_binary doc "encrypted_field" Encrypted (Bytes.of_string "encrypted_value");
     write_binary doc "user_defined_value" User_defined (Bytes.of_string "user_defined");
     write_document_close doc;
-    match finalize doc with
+    match to_bytes doc with
     | Ok bytes -> bytes
     | Error _ -> failwith "Error creating binary_fields document"
 

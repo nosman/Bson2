@@ -1,5 +1,6 @@
 open Core
 open S
+open Stdio
 
 module Writer : BsonWriter = struct
 
@@ -227,7 +228,7 @@ module Writer : BsonWriter = struct
     let write_utc_datetime =
         write_field '\x09' write_int64'
 
-    let finalize { open_docs; closed_docs; data } =
+    let to_bytes { open_docs; closed_docs; data } =
         if List.is_empty open_docs
         then
             (* Fill in all document openings *) 
@@ -242,4 +243,15 @@ module Writer : BsonWriter = struct
                     List.iteri length ~f:(fun i b -> Bytes.set bytes (doc_open + i) b)) closed_docs;
             Ok bytes
         else Error "Unclosed document"
+
+    let to_string writer =
+        Result.map
+            (to_bytes writer)
+            ~f:Bytes.to_string
+
+    let to_out_channel writer chan =
+        Result.map
+            (to_string writer)
+            (* TODO: close the underlying channel? *)
+            ~f:(fun s -> Out_channel.output_string chan s)
 end

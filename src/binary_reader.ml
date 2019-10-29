@@ -185,6 +185,10 @@ module Reader : BsonReader = struct
         let _size = read_int32 reader in
         reader
 
+    let of_string s =
+        let bytes = Bytes.of_string s in
+        of_bytes bytes
+
     let of_in_channel' c =
         let read_bytes n =
             let b = Bytes.create n in

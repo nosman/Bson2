@@ -71,7 +71,11 @@ module type BsonWriter = sig
 
     val write_maxkey : t -> string -> unit
 
-    val finalize : t -> (bytes, string) Result.t
+    val to_bytes : t -> (bytes, string) Result.t
+
+    val to_string : t -> (string, string) Result.t
+
+    val to_out_channel : t -> Out_channel.t -> (unit, string) Result.t
 
 end
 
@@ -106,6 +110,8 @@ module type BsonReader = sig
     type t
 
     val of_bytes : bytes -> t
+
+    val of_string : string -> t
 
     val of_in_channel : In_channel.t -> t
 
