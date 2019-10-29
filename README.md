@@ -12,7 +12,7 @@ Currently, this library supports reading and writing from and to the binary bson
 
 ## Getting Started
 
-# Writing
+### Writing
 
 ```ocaml
 
@@ -27,7 +27,7 @@ let document =
 
 ```
 
-# Reading
+### Reading
 
 A reader can be created from either bytes or a channel.
 
