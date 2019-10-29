@@ -23,7 +23,7 @@ let document =
     write_int32 doc "age" 28l;
     write_string doc "email" "stephanos.tsoucas@gmail.com";
     write_document_close doc;
-    finalize doc |> Result.ok_or_failwith
+    to_string doc |> Result.ok_or_failwith
 
 ```
 
