@@ -1,6 +1,7 @@
 open Core
 open S
 open Stdio
+open Primitives
 
 module Writer : BsonWriter = struct
 
@@ -11,18 +12,14 @@ module Writer : BsonWriter = struct
 
     exception Invalid_state of string
 
-    let write_cstring d str =
-        Buffer.add_string d.data str;
-        Buffer.add_char d.data '\x00'
-
     let write_field c write_value d name v =
         Buffer.add_char d.data c;
-        write_cstring d name;
+        encode_cstring d.data name;
         write_value d v
 
     let write_field_no_value c d name =
         Buffer.add_char d.data c;
-        write_cstring d name
+        encode_cstring d.data name
 
     let int32_to_bytes v =
         let rec helper i acc =
@@ -39,18 +36,10 @@ module Writer : BsonWriter = struct
         |> List.rev
 
     let write_int32' d v =
-        let rec helper i =
-            if i >= 4
-            then ()
-            else
-                let bits_to_shift = i * 8 in
-                let b =
-                    Int32.(shift_right v bits_to_shift land 255l
-                           |> to_int_exn
-                           |> Char.of_int_exn) in
-                Buffer.add_char d.data b;
-                helper (i + 1) in
-        helper 0
+        encode_int32 d.data v
+
+    let write_int64' d v =
+        encode_int64 d.data v
 
     let write_string' d str =
         String.length str |> Int32.of_int_exn |> write_int32' d;
@@ -62,20 +51,6 @@ module Writer : BsonWriter = struct
 
     let write_int32 =
         write_field '\x10' write_int32'
-
-    let write_int64' d v =
-        let rec helper i =
-            if i >= 8
-            then ()
-            else
-                let bits_to_shift = i * 8 in
-                let b =
-                    Int64.(shift_right v bits_to_shift land 255L
-                           |> to_int_exn
-                           |> Char.of_int_exn) in
-                Buffer.add_char d.data b;
-                helper (i + 1) in
-        helper 0
 
     let write_int64 =
         write_field '\x12' write_int64'
@@ -105,15 +80,7 @@ module Writer : BsonWriter = struct
         
         (* Write the size as an int32 *)
         let c =
-            match subtype with
-            | Generic -> '\x00'
-            | Function -> '\x01'
-            | Binary_old -> '\x02'
-            | UUID_old -> '\x03'
-            | UUID -> '\x04'
-            | MD5 -> '\x05'
-            | Encrypted -> '\x06'
-            | User_defined -> '\x80' in
+            S.binary_type_to_char subtype in
         (* Length of the binary content. *)
         Bytes.length bin
         |> Int32.of_int_exn     
@@ -139,10 +106,10 @@ module Writer : BsonWriter = struct
     let write_maxkey =
         write_field_no_value '\x7F'
 
-    let write_regex buf name ~pattern:p ~options:o =
-        write_field_no_value '\x0B' buf name;
-        write_cstring buf p;
-        write_cstring buf o
+    let write_regex d name ~pattern:p ~options:o =
+        write_field_no_value '\x0B' d name;
+        encode_cstring d.data p;
+        encode_cstring d.data o
 
     let create initial_size =
         let doc =

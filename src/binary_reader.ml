@@ -1,7 +1,7 @@
 open Core
 open S
+open Primitives
 
-(* Parameterize over input type. *)
 module Reader : BsonReader = struct
 
     type bson_type =
@@ -34,64 +34,25 @@ module Reader : BsonReader = struct
         { read_bytes: int -> bytes
         ; read_char: unit -> char }
 
-    let read_int32 d =
-        let b = d.read_bytes 4 in
-        let rec helper i acc =
-            if i < 0
-            then acc
-            else
-                let high =
-                    Bytes.get b i
-                    |> Char.to_int
-                    |> Int32.of_int_exn in
-                let acc =
-                    Int32.(shift_left acc 8 lor high) in
-                helper (i - 1) acc in
-        helper 3 0l
-
-    let read_int64 d =
-        let b = d.read_bytes 8 in
-        let rec helper i acc =
-            if i < 0
-            then acc
-            else
-                let high =
-                    Bytes.get b i
-                    |> Char.to_int
-                    |> Int64.of_int in
-                let acc =
-                    Int64.(shift_left acc 8 lor high) in
-                helper (i - 1) acc in
-        helper 7 0L
-
     let read_float d =
-        read_int64 d
+        decode_int64 d.read_bytes
         |> Int64.float_of_bits
 
     let read_string d =
-        let size = read_int32 d in
+        let size = decode_int32 d.read_bytes in
         let str =
             d.read_bytes (Int32.to_int_exn size)
             |> Bytes.to_string in
         match d.read_char () with
         | '\x00' -> str
         | c -> failwithf "Malformed document: string terminated with %c instead of null character." c ()
-
-    let read_cstring d =
-        let buf = Buffer.create 80 in
-        let rec helper () =
-            let next = d.read_char () in
-            match next with
-            | '\x00' -> Buffer.contents buf
-            | c -> (Buffer.add_char buf c; helper ()) in
-        helper ()
     
     let read_document_start d =
-        let _size = read_int32 d in
+        let _size = decode_int32 d.read_bytes in
         Document_start
 
     let read_array_start d =
-        let _size = read_int32 d in
+        let _size = decode_int32 d.read_bytes in
         Array_start
 
     let read_bool d =
@@ -101,18 +62,9 @@ module Reader : BsonReader = struct
         | c -> failwithf "Invalid value %c for boolean" c () 
 
     let read_binary d =
-        let size = read_int32 d |> Int32.to_int_exn in
+        let size = decode_int32 d.read_bytes |> Int32.to_int_exn in
         let binary_type =
-            match d.read_char () with
-            | '\x00' -> Generic
-            | '\x01' -> Function
-            | '\x02' -> Binary_old
-            | '\x03' -> UUID_old
-            | '\x04' -> UUID
-            | '\x05' -> MD5
-            | '\x06' -> Encrypted
-            | '\x80' -> User_defined
-            | x -> failwithf "Invalid binary subtype %c" x () in
+            S.binary_type_of_char (d.read_char ()) in 
         let bin = d.read_bytes size in
         Binary(binary_type, bin)
 
@@ -123,12 +75,12 @@ module Reader : BsonReader = struct
         d.read_bytes 16
 
     let read_regex d =
-        let pattern = read_cstring d in
-        let options = read_cstring d in
+        let pattern = decode_cstring d.read_char in
+        let options = decode_cstring d.read_char in
         Regex { pattern; options }
 
     let read_js_with_scope d =
-        let _size = read_int32 d in
+        let _size = decode_int32 d.read_bytes in
         let code = read_string d in
         read_document_start d |> ignore;
         JSCode_with_scope code
@@ -139,7 +91,7 @@ module Reader : BsonReader = struct
         | c ->
             try
             begin
-                let name = read_cstring d in
+                let name = decode_cstring d.read_char in
                 match c with
                 | '\x01' -> Field(name, Double(read_float d))
                 | '\x02' -> Field(name, String(read_string d))
@@ -148,14 +100,14 @@ module Reader : BsonReader = struct
                 | '\x05' -> Field(name, read_binary d)
                 | '\x07' -> Field(name, ObjectId(read_objectid d))
                 | '\x08' -> Field(name, Boolean(read_bool d))
-                | '\x09' -> Field(name, DateTime(read_int64 d))
+                | '\x09' -> Field(name, DateTime(decode_int64 d.read_bytes))
                 | '\x0A' -> Field(name, Null)
                 | '\x0B' -> Field(name, read_regex d)
                 | '\x0D' -> Field(name, JSCode(read_string d))
                 | '\x0F' -> Field(name, read_js_with_scope d)
-                | '\x10' -> Field(name, Int32(read_int32 d))
-                | '\x11' -> Field(name, Timestamp(read_int64 d))
-                | '\x12' -> Field(name, Int64(read_int64 d))
+                | '\x10' -> Field(name, Int32(decode_int32 d.read_bytes))
+                | '\x11' -> Field(name, Timestamp(decode_int64 d.read_bytes))
+                | '\x12' -> Field(name, Int64(decode_int64 d.read_bytes))
                 | '\x13' -> Field(name, Decimal128(read_decimal128 d))
                 | '\xFF' -> Field(name, Min_key) 
                 | '\x7F' -> Field(name, Max_key)
@@ -182,7 +134,7 @@ module Reader : BsonReader = struct
 
     let of_bytes b =
         let reader = of_bytes' b in
-        let _size = read_int32 reader in
+        let _size = decode_int32 reader.read_bytes in
         reader
 
     let of_string s =
@@ -210,6 +162,6 @@ module Reader : BsonReader = struct
 
     let of_in_channel c =
         let reader = of_in_channel' c in
-        let _size = read_int32 reader in
+        let _size = decode_int32 reader.read_bytes in
         reader
 end

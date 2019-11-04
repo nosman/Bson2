@@ -1,6 +1,6 @@
 (executable
   (name bson_test)
-  (libraries oUnit bson2)
+  (libraries oUnit bson2 yojson)
 )
 
 (alias

@@ -11,5 +11,5 @@ let register_tests (module T : TestSuite) =
 let _ =
     "Bson main test suite" >:::
     List.map register_tests
-             [ (module Encoding_test); (module Decoding_test) ]
+             [ (module Encoding_test); (module Decoding_test); (module Json_reader_test) ]
     |> run_test_tt_main

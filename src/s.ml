@@ -10,6 +10,29 @@ type binary_type =
     | Encrypted
     | User_defined [@@deriving sexp]
 
+let binary_type_of_char =
+    function
+    | '\x00' -> Generic
+    | '\x01' -> Function
+    | '\x02' -> Binary_old
+    | '\x03' -> UUID_old
+    | '\x04' -> UUID
+    | '\x05' -> MD5
+    | '\x06' -> Encrypted
+    | '\x80' -> User_defined
+    | x -> failwithf "Invalid binary subtype %c" x () 
+
+let binary_type_to_char =
+    function
+    | Generic -> '\x00'
+    | Function -> '\x01'
+    | Binary_old -> '\x02'
+    | UUID_old -> '\x03'
+    | UUID -> '\x04'
+    | MD5 -> '\x05'
+    | Encrypted -> '\x06'
+    | User_defined -> '\x80'
+
 type document_type = Array | Document | Js_code_w_scope of int [@@deriving sexp]
 
 let document_type_to_char = function
