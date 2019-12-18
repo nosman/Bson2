@@ -139,7 +139,7 @@ module Writer : BsonWriter = struct
         match d.open_docs with
         | [] -> raise (Invalid_state "No open docs to close")
         | (start, typ)::tl ->
-                if typ = doc_type
+                if Poly.(typ = doc_type)
                 then
                     let close = Buffer.length d.data in
                     Buffer.add_char d.data '\x00';
