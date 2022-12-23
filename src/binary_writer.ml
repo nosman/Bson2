@@ -42,7 +42,7 @@ module Writer : BsonWriter = struct
         encode_int64 d.data v
 
     let write_string' d str =
-        String.length str |> Int32.of_int_exn |> write_int32' d;
+        ((String.length str) + 1) |> Int32.of_int_exn |> write_int32' d;
         Buffer.add_string d.data str;
         Buffer.add_char d.data '\x00'
 
